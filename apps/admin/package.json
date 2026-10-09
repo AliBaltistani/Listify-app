@@ -1,0 +1,12 @@
+{
+    "name": "listify-admin",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "echo 'Admin portal not yet implemented'",
+        "build": "echo 'Admin portal not yet implemented'"
+    },
+    "dependencies": {
+        "@listify/shared": "*"
+    }
+}

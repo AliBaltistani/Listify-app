@@ -1,0 +1,25 @@
+{
+  "name": "listify",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/backend",
+    "apps/admin"
+  ],
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js",
+    "start": "cd apps/mobile && npx expo start",
+    "start:android": "cd apps/mobile && npx expo start --android",
+    "start:ios": "cd apps/mobile && npx expo start --ios",
+    "start:web": "cd apps/mobile && npx expo start --web",
+    "dev:backend": "npm run dev --workspace=apps/backend",
+    "build:shared": "npm run build --workspace=packages/shared",
+    "typecheck": "npm run typecheck --workspace=packages/shared && cd apps/mobile && npm run typecheck",
+    "setup": "npm install && echo Setup complete"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
