@@ -1,0 +1,10 @@
+{
+  "/users/page": "app/users/page.js",
+  "/users/verify/page": "app/users/verify/page.js",
+  "/config/theme/page": "app/config/theme/page.js",
+  "/content/page": "app/content/page.js",
+  "/config/features/page": "app/config/features/page.js",
+  "/locations/page": "app/locations/page.js",
+  "/system/audit/page": "app/system/audit/page.js",
+  "/config/push/page": "app/config/push/page.js"
+}
