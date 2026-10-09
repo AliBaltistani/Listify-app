@@ -1,10 +1,6 @@
-# Listify — Platform Architecture Document
+#
+""""""""""""""""""""""""""""""""""""""""""""
 
-> **Version:** 2.0  
-> **Last Updated:** 2026-10-07  
-> **Scope:** Mobile App + Web Admin Portal + Unified Backend
-
----
 
 ## 1. Platform Overview — Unified Architecture
 

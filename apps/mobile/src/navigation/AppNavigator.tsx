@@ -55,25 +55,52 @@ export const AppNavigator: React.FC = () => {
         switch (currentScreen) {
             // Part 1
             case 'Splash':
-                return <SplashScreen />;
+                return <SplashScreen onContinue={() => setCurrentScreen('Onboarding')} />;
 
             case 'Onboarding':
-                return <OnboardingScreen />;
+                return <OnboardingScreen onComplete={() => setCurrentScreen('Login')} />;
 
             case 'Login':
-                return <LoginScreen />;
+                return (
+                    <LoginScreen
+                        onNavigateToRegister={() => setCurrentScreen('Register')}
+                        onNavigateToForgotPassword={() => setCurrentScreen('ForgotPassword')}
+                        onNavigateToHome={() => setCurrentScreen('Home')}
+                    />
+                );
 
             case 'Register':
-                return <RegisterScreen />;
+                return (
+                    <RegisterScreen
+                        onNavigateToLogin={() => setCurrentScreen('Login')}
+                        onNavigateToOtpMethod={() => setCurrentScreen('OtpMethod')}
+                    />
+                );
 
             case 'ForgotPassword':
-                return <ForgotPasswordScreen />;
+                return (
+                    <ForgotPasswordScreen
+                        onBackPress={() => setCurrentScreen('Login')}
+                        onNavigateToLogin={() => setCurrentScreen('Login')}
+                        onSendResetLink={() => setCurrentScreen('OtpVerification')}
+                    />
+                );
 
             case 'OtpMethod':
-                return <OtpMethodScreen />;
+                return (
+                    <OtpMethodScreen
+                        onBackPress={() => setCurrentScreen('Register')}
+                        onSendOtp={() => setCurrentScreen('OtpVerification')}
+                    />
+                );
 
             case 'OtpVerification':
-                return <OtpVerificationScreen />;
+                return (
+                    <OtpVerificationScreen
+                        onBackPress={() => setCurrentScreen('OtpMethod')}
+                        onVerifyNext={() => setCurrentScreen('Login')}
+                    />
+                );
 
             case 'Home':
                 return (
