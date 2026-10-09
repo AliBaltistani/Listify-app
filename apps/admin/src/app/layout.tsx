@@ -17,7 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     const [isCommandPaletteOpen, setIsCommandPaletteOpen] = React.useState(false);
 
     return (
-        <html lang="en" className="h-full">
+        <html lang="en" className="h-full" suppressHydrationWarning>
             <head>
                 <title>Listify Admin Control Portal</title>
                 <meta name="description" content="Listify Admin Marketplace Management Portal" />
@@ -26,7 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
             </head>
-            <body className="flex h-full bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 antialiased overflow-hidden">
+            <body className="flex h-full bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 antialiased overflow-hidden" suppressHydrationWarning>
                 {isAuthPage ? (
                     <div className="w-full h-full overflow-y-auto">
                         {children}
