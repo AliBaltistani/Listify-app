@@ -1,0 +1,8 @@
+# Next.js Build Outputs
+.next/
+out/
+build/
+*.tsbuildinfo
+node_modules/
+.env
+.env.local
