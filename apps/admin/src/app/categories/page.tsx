@@ -5,123 +5,144 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Dialog } from '@/components/ui/Dialog';
 import {
     FolderTree,
     Plus,
     Trash2,
     Edit2,
-    ChevronRight,
-    GripVertical,
+    CheckCircle2,
+    Layers,
     Smartphone,
     Car,
-    Home as HomeIcon,
-    Shirt,
-    Sparkles,
-    CheckCircle2,
+    Home,
     Sliders,
     Type,
-    List,
+    ListFilter,
     CheckSquare,
-    ToggleLeft,
+    HelpCircle,
+    Hash,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface CategoryField {
+interface FieldSpec {
     id: string;
-    name: string;
+    label: string;
     key: string;
-    type: 'TEXT' | 'NUMBER' | 'SELECT' | 'MULTISELECT' | 'TOGGLE';
+    type: 'SELECT' | 'TEXT' | 'NUMBER' | 'BOOLEAN';
     required: boolean;
     filterable: boolean;
     options?: string[];
 }
 
-interface Category {
+interface CategoryNode {
     id: string;
     name: string;
+    slug: string;
     icon: string;
+    fieldsCount: number;
     subcategories: string[];
-    fields: CategoryField[];
 }
 
-export default function CategoriesBuilderPage() {
-    const [categories, setCategories] = React.useState<Category[]>([
+export default function CategoryBuilderPage() {
+    const [categories, setCategories] = React.useState<CategoryNode[]>([
         {
             id: 'cat-mobiles',
             name: 'Mobiles & Tablets',
+            slug: 'mobiles-tablets',
             icon: 'Smartphone',
-            subcategories: ['Smartphones', 'Tablets', 'Smart Watches', 'Accessories'],
-            fields: [
-                { id: 'f1', name: 'Brand', key: 'brand', type: 'SELECT', required: true, filterable: true, options: ['Apple', 'Samsung', 'Xiaomi', 'Vivo', 'Oppo', 'OnePlus'] },
-                { id: 'f2', name: 'Model', key: 'model', type: 'TEXT', required: true, filterable: true },
-                { id: 'f3', name: 'Storage Capacity', key: 'storage', type: 'SELECT', required: true, filterable: true, options: ['64GB', '128GB', '256GB', '512GB', '1TB'] },
-                { id: 'f4', name: 'PTA Status', key: 'pta_status', type: 'SELECT', required: true, filterable: true, options: ['Approved', 'Non-PTA', 'CPID Approved', 'Passport Registered'] },
-                { id: 'f5', name: 'Condition', key: 'condition', type: 'SELECT', required: true, filterable: true, options: ['New', 'Used (Like New)', 'Used (Good)', 'Refurbished'] },
-            ],
+            fieldsCount: 5,
+            subcategories: ['Mobile Phones', 'Tablets', 'Smart Watches', 'Accessories'],
         },
         {
             id: 'cat-vehicles',
-            name: 'Vehicles & Cars',
+            name: 'Vehicles & Motors',
+            slug: 'vehicles-motors',
             icon: 'Car',
-            subcategories: ['Cars', 'Bikes & Motorcycles', 'Auto Parts', 'Commercial Vehicles'],
-            fields: [
-                { id: 'f6', name: 'Make', key: 'make', type: 'SELECT', required: true, filterable: true, options: ['Honda', 'Toyota', 'Suzuki', 'Hyundai', 'KIA', 'MG'] },
-                { id: 'f7', name: 'Model Year', key: 'year', type: 'NUMBER', required: true, filterable: true },
-                { id: 'f8', name: 'Mileage (km)', key: 'mileage', type: 'NUMBER', required: true, filterable: true },
-                { id: 'f9', name: 'Fuel Type', key: 'fuel', type: 'SELECT', required: true, filterable: true, options: ['Petrol', 'Diesel', 'Hybrid', 'Electric', 'CNG'] },
-                { id: 'f10', name: 'Transmission', key: 'transmission', type: 'SELECT', required: true, filterable: true, options: ['Automatic', 'Manual'] },
-            ],
+            fieldsCount: 6,
+            subcategories: ['Cars', 'Motorcycles', 'Spare Parts', 'Bicycles', 'Commercial Vehicles'],
         },
         {
             id: 'cat-property',
-            name: 'Property & Rent',
+            name: 'Real Estate & Property',
+            slug: 'real-estate-property',
             icon: 'Home',
-            subcategories: ['Houses for Sale', 'Flats for Rent', 'Plots & Land', 'Commercial Space'],
-            fields: [
-                { id: 'f11', name: 'Property Type', key: 'property_type', type: 'SELECT', required: true, filterable: true, options: ['House', 'Flat / Apartment', 'Commercial Office', 'Plot'] },
-                { id: 'f12', name: 'Area Size', key: 'area', type: 'TEXT', required: true, filterable: true },
-                { id: 'f13', name: 'Bedrooms', key: 'bedrooms', type: 'SELECT', required: true, filterable: true, options: ['1', '2', '3', '4', '5+'] },
-                { id: 'f14', name: 'Bathrooms', key: 'bathrooms', type: 'SELECT', required: true, filterable: true, options: ['1', '2', '3', '4', '5+'] },
-            ],
+            fieldsCount: 4,
+            subcategories: ['Land & Plots', 'Houses for Sale', 'Apartments for Rent', 'Commercial Property'],
         },
     ]);
 
-    const [selectedCategoryId, setSelectedCategoryId] = React.useState<string>('cat-mobiles');
+    const [selectedCatId, setSelectedCatId] = React.useState<string>('cat-mobiles');
 
-    const selectedCategory = categories.find((c) => c.id === selectedCategoryId) || categories[0];
+    const [fields, setFields] = React.useState<FieldSpec[]>([
+        { id: 'f-1', label: 'Brand / Make', key: 'brand', type: 'SELECT', required: true, filterable: true, options: ['Apple', 'Samsung', 'Xiaomi', 'Vivo', 'Oppo', 'Infinix'] },
+        { id: 'f-2', label: 'PTA Verification Status', key: 'pta_status', type: 'SELECT', required: true, filterable: true, options: ['PTA Approved', 'Non-PTA / VIP', 'CPID Approved'] },
+        { id: 'f-3', label: 'Internal Storage', key: 'storage_gb', type: 'SELECT', required: true, filterable: true, options: ['64 GB', '128 GB', '256 GB', '512 GB', '1 TB'] },
+        { id: 'f-4', label: 'RAM Memory Size', key: 'ram_gb', type: 'SELECT', required: false, filterable: true, options: ['4 GB', '6 GB', '8 GB', '12 GB'] },
+        { id: 'f-5', label: 'Battery Health Percentage', key: 'battery_health', type: 'NUMBER', required: false, filterable: false },
+    ]);
 
-    const handleAddField = () => {
-        const newField: CategoryField = {
-            id: `f-${Date.now()}`,
-            name: 'New Custom Field',
-            key: 'new_field',
-            type: 'TEXT',
-            required: false,
-            filterable: true,
+    // Modal States
+    const [isCatModalOpen, setIsCatModalOpen] = React.useState(false);
+    const [isFieldModalOpen, setIsFieldModalOpen] = React.useState(false);
+
+    // Category Form State
+    const [catName, setCatName] = React.useState('');
+    const [catSlug, setCatSlug] = React.useState('');
+    const [catIcon, setCatIcon] = React.useState('Smartphone');
+
+    // Field Form State
+    const [fieldLabel, setFieldLabel] = React.useState('');
+    const [fieldKey, setFieldKey] = React.useState('');
+    const [fieldType, setFieldType] = React.useState<'SELECT' | 'TEXT' | 'NUMBER' | 'BOOLEAN'>('SELECT');
+    const [fieldOptions, setFieldOptions] = React.useState('');
+    const [isRequired, setIsRequired] = React.useState(true);
+    const [isFilterable, setIsFilterable] = React.useState(true);
+
+    const handleCreateCategory = (e: React.FormEvent) => {
+        e.preventDefault();
+        const newCat: CategoryNode = {
+            id: `cat-${Date.now()}`,
+            name: catName,
+            slug: catSlug || catName.toLowerCase().replace(/\s+/g, '-'),
+            icon: catIcon,
+            fieldsCount: 0,
+            subcategories: [],
         };
-
-        setCategories((prev) =>
-            prev.map((cat) =>
-                cat.id === selectedCategoryId ? { ...cat, fields: [...cat.fields, newField] } : cat
-            )
-        );
-        toast.success('Added new custom field to schema!');
+        setCategories([...categories, newCat]);
+        setSelectedCatId(newCat.id);
+        toast.success(`Category "${newCat.name}" created!`);
+        setIsCatModalOpen(false);
+        setCatName('');
+        setCatSlug('');
     };
 
-    const handleDeleteField = (fieldId: string) => {
-        setCategories((prev) =>
-            prev.map((cat) =>
-                cat.id === selectedCategoryId
-                    ? { ...cat, fields: cat.fields.filter((f) => f.id !== fieldId) }
-                    : cat
-            )
-        );
-        toast.error('Field removed from category schema.');
+    const handleCreateField = (e: React.FormEvent) => {
+        e.preventDefault();
+        const opts = fieldOptions ? fieldOptions.split(',').map((s) => s.trim()) : undefined;
+        const newF: FieldSpec = {
+            id: `f-${Date.now()}`,
+            label: fieldLabel,
+            key: fieldKey || fieldLabel.toLowerCase().replace(/\s+/g, '_'),
+            type: fieldType,
+            required: isRequired,
+            filterable: isFilterable,
+            options: opts,
+        };
+        setFields([...fields, newF]);
+        toast.success(`Dynamic field "${newF.label}" added to schema!`);
+        setIsFieldModalOpen(false);
+        setFieldLabel('');
+        setFieldKey('');
+        setFieldOptions('');
     };
 
-    const handleSaveSchema = () => {
-        toast.success(`Category schema for "${selectedCategory.name}" saved & deployed to Mobile App!`);
+    const handleDeleteField = (id: string) => {
+        setFields(fields.filter((f) => f.id !== id));
+        toast.info('Field removed from schema.');
     };
+
+    const activeCategory = categories.find((c) => c.id === selectedCatId) || categories[0];
 
     return (
         <div className="space-y-6">
@@ -133,211 +154,246 @@ export default function CategoriesBuilderPage() {
                         Dynamic Category & Field Builder
                     </h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Define custom form specification schemas per category without writing any frontend code.
+                        Define dynamic product specifications, form attributes, and search filters with zero hardcoding.
                     </p>
                 </div>
 
-                <Button variant="primary" onClick={handleSaveSchema} className="shadow-lg shadow-listify-orange/30">
-                    <CheckCircle2 className="h-4 w-4" />
-                    Save Schema to API
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" onClick={() => setIsCatModalOpen(true)}>
+                        <Plus className="h-4 w-4" /> Add New Category
+                    </Button>
+                    <Button variant="primary" onClick={() => setIsFieldModalOpen(true)} className="shadow-lg shadow-listify-orange/30">
+                        <Plus className="h-4 w-4" /> Add Field Specification
+                    </Button>
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column: Category Hierarchy Selector */}
-                <Card className="lg:col-span-1">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle className="text-base font-bold">Categories</CardTitle>
-                        <Button variant="ghost" size="icon">
-                            <Plus className="h-4 w-4" />
-                        </Button>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {categories.map((cat) => {
-                            const isSelected = cat.id === selectedCategoryId;
-                            return (
-                                <button
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Left Category Navigation Tree */}
+                <div className="lg:col-span-4 space-y-4">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between pb-3">
+                            <CardTitle className="text-base font-bold">Categories</CardTitle>
+                            <Badge variant="active" size="sm">{categories.length} Top Categories</Badge>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            {categories.map((cat) => (
+                                <div
                                     key={cat.id}
-                                    onClick={() => setSelectedCategoryId(cat.id)}
-                                    className={`w-full flex items-center justify-between p-3.5 rounded-xl text-left transition-all ${isSelected
-                                            ? 'bg-listify-orange text-white shadow-md shadow-listify-orange/20 font-bold'
-                                            : 'bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                                    onClick={() => setSelectedCatId(cat.id)}
+                                    className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${selectedCatId === cat.id
+                                            ? 'bg-listify-orange/10 border-listify-orange text-listify-orange shadow-sm'
+                                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300'
                                         }`}
                                 >
                                     <div className="flex items-center gap-3">
-                                        <FolderTree className="h-4 w-4" />
+                                        {cat.icon === 'Smartphone' && <Smartphone className="h-5 w-5" />}
+                                        {cat.icon === 'Car' && <Car className="h-5 w-5" />}
+                                        {cat.icon === 'Home' && <Home className="h-5 w-5" />}
                                         <div>
-                                            <div className="text-sm font-semibold">{cat.name}</div>
-                                            <div className={`text-xs ${isSelected ? 'text-white/80' : 'text-slate-400'}`}>
-                                                {cat.fields.length} dynamic fields
-                                            </div>
+                                            <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100">{cat.name}</h4>
+                                            <p className="text-[10px] text-slate-400">{cat.subcategories.length} subcategories</p>
                                         </div>
                                     </div>
-                                    <ChevronRight className={`h-4 w-4 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
-                                </button>
-                            );
-                        })}
-                    </CardContent>
-                </Card>
-
-                {/* Right Column: Visual Drag & Drop Dynamic Field Builder */}
-                <Card className="lg:col-span-2">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <div>
-                            <CardTitle className="text-base font-bold">
-                                Field Schema: {selectedCategory.name}
-                            </CardTitle>
-                            <CardDescription>
-                                Form fields dynamically rendered on mobile Post-An-Ad wizard & filter sheets.
-                            </CardDescription>
-                        </div>
-
-                        <Button variant="outline" size="sm" onClick={handleAddField}>
-                            <Plus className="h-4 w-4" />
-                            Add Custom Field
-                        </Button>
-                    </CardHeader>
-
-                    <CardContent className="space-y-4">
-                        {selectedCategory.fields.map((field, idx) => (
-                            <div
-                                key={field.id}
-                                className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 hover:border-listify-orange/50 transition-all group"
-                            >
-                                {/* Drag Handle */}
-                                <div className="mt-2 text-slate-400 cursor-grab active:cursor-grabbing hover:text-slate-600">
-                                    <GripVertical className="h-5 w-5" />
                                 </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                </div>
 
-                                {/* Field Details Editor */}
-                                <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    <div>
-                                        <label className="text-[11px] font-bold text-slate-500 uppercase">Field Label</label>
-                                        <Input
-                                            value={field.name}
-                                            onChange={(e) => {
-                                                const val = e.target.value;
-                                                setCategories((prev) =>
-                                                    prev.map((c) =>
-                                                        c.id === selectedCategoryId
-                                                            ? {
-                                                                ...c,
-                                                                fields: c.fields.map((f) => (f.id === field.id ? { ...f, name: val } : f)),
-                                                            }
-                                                            : c
-                                                    )
-                                                );
-                                            }}
-                                        />
-                                    </div>
+                {/* Right Dynamic Fields Schema Editor */}
+                <div className="lg:col-span-8 space-y-4">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle className="text-base font-bold flex items-center gap-2">
+                                    <Sliders className="h-5 w-5 text-listify-orange" />
+                                    Dynamic Attribute Fields for "{activeCategory?.name}"
+                                </CardTitle>
+                                <CardDescription>
+                                    These form fields appear in the mobile app posting wizard & search filter sheet.
+                                </CardDescription>
+                            </div>
 
-                                    <div>
-                                        <label className="text-[11px] font-bold text-slate-500 uppercase">Field Key</label>
-                                        <Input value={field.key} readOnly className="font-mono text-xs text-slate-400 bg-slate-100 dark:bg-slate-900" />
-                                    </div>
+                            <Button variant="primary" size="sm" onClick={() => setIsFieldModalOpen(true)}>
+                                <Plus className="h-4 w-4" /> Add Attribute Field
+                            </Button>
+                        </CardHeader>
 
-                                    <div>
-                                        <label className="text-[11px] font-bold text-slate-500 uppercase">Field Type</label>
-                                        <select
-                                            value={field.type}
-                                            onChange={(e) => {
-                                                const val = e.target.value as any;
-                                                setCategories((prev) =>
-                                                    prev.map((c) =>
-                                                        c.id === selectedCategoryId
-                                                            ? {
-                                                                ...c,
-                                                                fields: c.fields.map((f) => (f.id === field.id ? { ...f, type: val } : f)),
-                                                            }
-                                                            : c
-                                                    )
-                                                );
-                                            }}
-                                            className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-900 focus:ring-2 focus:ring-listify-orange dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
-                                        >
-                                            <option value="SELECT">Select Dropdown</option>
-                                            <option value="TEXT">Short Text</option>
-                                            <option value="NUMBER">Number Input</option>
-                                            <option value="MULTISELECT">Multi-Select Checkboxes</option>
-                                            <option value="TOGGLE">Yes / No Switch</option>
-                                        </select>
-                                    </div>
+                        <CardContent className="space-y-3">
+                            {fields.map((field) => (
+                                <div
+                                    key={field.id}
+                                    className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                                >
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{field.label}</span>
+                                            <Badge variant="outline" size="sm" className="font-mono text-[10px]">
+                                                {field.key}
+                                            </Badge>
+                                            <Badge variant="default" size="sm">
+                                                {field.type}
+                                            </Badge>
+                                        </div>
 
-                                    {/* Options List if SELECT */}
-                                    {field.options && (
-                                        <div className="sm:col-span-3 text-xs space-y-1">
-                                            <span className="font-bold text-slate-500">Allowed Options:</span>
-                                            <div className="flex flex-wrap gap-1.5 pt-1">
+                                        {field.options && (
+                                            <div className="flex flex-wrap gap-1 pt-1">
                                                 {field.options.map((opt, oIdx) => (
-                                                    <span key={oIdx} className="px-2 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium">
+                                                    <span key={oIdx} className="px-2 py-0.5 rounded bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] text-slate-600 dark:text-slate-400">
                                                         {opt}
                                                     </span>
                                                 ))}
                                             </div>
+                                        )}
+                                    </div>
+
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500">
+                                            {field.required && <Badge variant="verified" size="sm">Required</Badge>}
+                                            {field.filterable && <Badge variant="active" size="sm">Search Filter</Badge>}
                                         </div>
-                                    )}
 
-                                    {/* Toggles: Required & Filterable */}
-                                    <div className="sm:col-span-3 flex items-center gap-6 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
-                                        <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={field.required}
-                                                onChange={(e) => {
-                                                    const val = e.target.checked;
-                                                    setCategories((prev) =>
-                                                        prev.map((c) =>
-                                                            c.id === selectedCategoryId
-                                                                ? {
-                                                                    ...c,
-                                                                    fields: c.fields.map((f) => (f.id === field.id ? { ...f, required: val } : f)),
-                                                                }
-                                                                : c
-                                                        )
-                                                    );
-                                                }}
-                                                className="rounded border-slate-300 text-listify-orange focus:ring-listify-orange"
-                                            />
-                                            <span>Required Field</span>
-                                        </label>
-
-                                        <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={field.filterable}
-                                                onChange={(e) => {
-                                                    const val = e.target.checked;
-                                                    setCategories((prev) =>
-                                                        prev.map((c) =>
-                                                            c.id === selectedCategoryId
-                                                                ? {
-                                                                    ...c,
-                                                                    fields: c.fields.map((f) => (f.id === field.id ? { ...f, filterable: val } : f)),
-                                                                }
-                                                                : c
-                                                        )
-                                                    );
-                                                }}
-                                                className="rounded border-slate-300 text-listify-orange focus:ring-listify-orange"
-                                            />
-                                            <span className="text-listify-orange">Add to Search Filter Sheet</span>
-                                        </label>
+                                        <Button variant="ghost" size="sm" onClick={() => handleDeleteField(field.id)}>
+                                            <Trash2 className="h-4 w-4 text-rose-500" />
+                                        </Button>
                                     </div>
                                 </div>
-
-                                {/* Delete Button */}
-                                <button
-                                    onClick={() => handleDeleteField(field.id)}
-                                    className="p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
-                                    title="Remove Field"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </button>
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
+                            ))}
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
+
+            {/* CREATE CATEGORY MODAL */}
+            <Dialog
+                isOpen={isCatModalOpen}
+                onClose={() => setIsCatModalOpen(false)}
+                title="Add New Category"
+                description="Create a top-level category node for the marketplace."
+                maxWidth="md"
+            >
+                <form onSubmit={handleCreateCategory} className="space-y-4 pt-2">
+                    <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase">Category Name</label>
+                        <Input
+                            placeholder="e.g. Fashion & Apparel"
+                            value={catName}
+                            onChange={(e) => setCatName(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase">Category Slug</label>
+                        <Input
+                            placeholder="e.g. fashion-apparel"
+                            value={catSlug}
+                            onChange={(e) => setCatSlug(e.target.value)}
+                            className="font-mono text-xs"
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <Button variant="ghost" type="button" onClick={() => setIsCatModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button variant="primary" type="submit">
+                            Save Category
+                        </Button>
+                    </div>
+                </form>
+            </Dialog>
+
+            {/* CREATE DYNAMIC FIELD MODAL */}
+            <Dialog
+                isOpen={isFieldModalOpen}
+                onClose={() => setIsFieldModalOpen(false)}
+                title={`Add Dynamic Field Spec to ${activeCategory?.name}`}
+                description="Define custom specification attribute fetched dynamically by the mobile app."
+                maxWidth="lg"
+            >
+                <form onSubmit={handleCreateField} className="space-y-4 pt-2">
+                    <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase">Field Label Name</label>
+                        <Input
+                            placeholder="e.g. PTA Status or Transmission"
+                            value={fieldLabel}
+                            onChange={(e) => setFieldLabel(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase">Technical Key</label>
+                            <Input
+                                placeholder="e.g. pta_status"
+                                value={fieldKey}
+                                onChange={(e) => setFieldKey(e.target.value)}
+                                className="font-mono text-xs"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase">Field Data Type</label>
+                            <select
+                                value={fieldType}
+                                onChange={(e) => setFieldType(e.target.value as any)}
+                                className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-900 focus:ring-2 focus:ring-listify-orange dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                            >
+                                <option value="SELECT">Dropdown Select (Options list)</option>
+                                <option value="TEXT">Freeform Text Input</option>
+                                <option value="NUMBER">Numeric Input</option>
+                                <option value="BOOLEAN">Yes / No Switch Toggle</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {fieldType === 'SELECT' && (
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase">Dropdown Options (Comma Separated)</label>
+                            <Input
+                                placeholder="e.g. PTA Approved, Non-PTA, CPID Approved"
+                                value={fieldOptions}
+                                onChange={(e) => setFieldOptions(e.target.value)}
+                                required
+                            />
+                        </div>
+                    )}
+
+                    <div className="flex items-center gap-6 pt-2">
+                        <label className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={isRequired}
+                                onChange={(e) => setIsRequired(e.target.checked)}
+                                className="rounded border-slate-300 text-listify-orange focus:ring-listify-orange"
+                            />
+                            <span>Required Mandatory Field</span>
+                        </label>
+
+                        <label className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={isFilterable}
+                                onChange={(e) => setIsFilterable(e.target.checked)}
+                                className="rounded border-slate-300 text-listify-orange focus:ring-listify-orange"
+                            />
+                            <span>Enable in Mobile Search Filter Sheet</span>
+                        </label>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <Button variant="ghost" type="button" onClick={() => setIsFieldModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button variant="primary" type="submit">
+                            Save Dynamic Field
+                        </Button>
+                    </div>
+                </form>
+            </Dialog>
         </div>
     );
 }

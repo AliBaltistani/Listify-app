@@ -7,106 +7,160 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import { Sheet } from '@/components/ui/Sheet';
+import { Dialog } from '@/components/ui/Dialog';
 import {
     Users,
     Search,
     ShieldCheck,
-    ShieldAlert,
-    Ban,
+    UserX,
+    UserPlus,
     Phone,
     Mail,
-    Calendar,
+    Eye,
     CheckCircle2,
-    XCircle,
-    MoreVertical,
-    Star,
-    ShoppingBag,
+    Lock,
+    Edit2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface UserRecord {
+interface UserItem {
     id: string;
     name: string;
-    email: string;
     phone: string;
-    role: 'USER' | 'SELLER' | 'VERIFIED_DEALER' | 'ADMIN';
+    email: string;
+    role: 'BUYER' | 'SELLER' | 'VERIFIED_DEALER' | 'MODERATOR' | 'SUPER_ADMIN';
     verified: boolean;
     status: 'ACTIVE' | 'SUSPENDED' | 'BANNED';
     joinedDate: string;
-    activeAds: number;
-    totalReports: number;
-    avatar: string;
+    listingsCount: number;
 }
 
-export default function UsersDirectoryPage() {
+export default function UsersPage() {
     const [searchQuery, setSearchQuery] = React.useState('');
-    const [selectedUser, setSelectedUser] = React.useState<UserRecord | null>(null);
+    const [selectedUser, setSelectedUser] = React.useState<UserItem | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
 
-    const usersList: UserRecord[] = [
-        {
-            id: 'USR-1092',
-            name: 'Usman Ali',
-            email: 'usman.ali@gmail.com',
-            phone: '+923001234567',
-            role: 'VERIFIED_DEALER',
-            verified: true,
-            status: 'ACTIVE',
-            joinedDate: 'Jan 2024',
-            activeAds: 14,
-            totalReports: 0,
-            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-        },
-        {
-            id: 'USR-1093',
-            name: 'Lahore Auto Motors',
-            email: 'sales@lahoreautos.pk',
-            phone: '+923219876543',
-            role: 'VERIFIED_DEALER',
-            verified: true,
-            status: 'ACTIVE',
-            joinedDate: 'Mar 2024',
-            activeAds: 28,
-            totalReports: 1,
-            avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-        },
+    // Form State
+    const [userName, setUserName] = React.useState('');
+    const [userPhone, setUserPhone] = React.useState('+92 300 ');
+    const [userEmail, setUserEmail] = React.useState('');
+    const [userRole, setUserRole] = React.useState<'BUYER' | 'SELLER' | 'VERIFIED_DEALER' | 'MODERATOR' | 'SUPER_ADMIN'>('SELLER');
+    const [isDealerVerified, setIsDealerVerified] = React.useState(false);
+
+    const [users, setUsers] = React.useState<UserItem[]>([
         {
             id: 'USR-1094',
             name: 'QuickSeller99',
-            email: 'quickseller99@tempmail.com',
-            phone: '+923451122334',
-            role: 'USER',
+            phone: '+92 300 1234567',
+            email: 'seller99@gmail.com',
+            role: 'SELLER',
             verified: false,
             status: 'SUSPENDED',
-            joinedDate: 'Yesterday',
-            activeAds: 1,
-            totalReports: 5,
-            avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150',
+            joinedDate: '3 months ago',
+            listingsCount: 14,
         },
-    ];
+        {
+            id: 'USR-1080',
+            name: 'TechHub Lahore',
+            phone: '+92 321 9876543',
+            email: 'sales@techhub.pk',
+            role: 'VERIFIED_DEALER',
+            verified: true,
+            status: 'ACTIVE',
+            joinedDate: '1 year ago',
+            listingsCount: 88,
+        },
+        {
+            id: 'USR-1001',
+            name: 'Ali Baltistani',
+            phone: '+92 345 5556677',
+            email: 'ali.admin@listify.pk',
+            role: 'SUPER_ADMIN',
+            verified: true,
+            status: 'ACTIVE',
+            joinedDate: '2 years ago',
+            listingsCount: 0,
+        },
+    ]);
 
-    const filteredUsers = usersList.filter(
-        (u) =>
-            u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            u.phone.includes(searchQuery) ||
-            u.id.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const handleCreateUser = (e: React.FormEvent) => {
+        e.preventDefault();
+        const newUser: UserItem = {
+            id: `USR-${Math.floor(1000 + Math.random() * 9000)}`,
+            name: userName,
+            phone: userPhone,
+            email: userEmail || `${userName.toLowerCase().replace(/\s+/g, '')}@gmail.com`,
+            role: userRole,
+            verified: isDealerVerified || userRole === 'VERIFIED_DEALER',
+            status: 'ACTIVE',
+            joinedDate: 'Just now',
+            listingsCount: 0,
+        };
+        setUsers([newUser, ...users]);
+        toast.success(`User account "${newUser.name}" created with role ${newUser.role}!`);
+        setIsCreateModalOpen(false);
+        setUserName('');
+        setUserPhone('+92 300 ');
+    };
 
-    const handleInspectUser = (user: UserRecord) => {
-        setSelectedUser(user);
+    const handleEditUser = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedUser) return;
+        setUsers((prev) =>
+            prev.map((u) =>
+                u.id === selectedUser.id
+                    ? {
+                        ...u,
+                        name: userName,
+                        phone: userPhone,
+                        email: userEmail,
+                        role: userRole,
+                        verified: isDealerVerified,
+                    }
+                    : u
+            )
+        );
+        toast.success(`User ${selectedUser.id} profile updated!`);
+        setIsEditModalOpen(false);
+    };
+
+    const handleOpenEdit = (u: UserItem) => {
+        setSelectedUser(u);
+        setUserName(u.name);
+        setUserPhone(u.phone);
+        setUserEmail(u.email);
+        setUserRole(u.role);
+        setIsDealerVerified(u.verified);
+        setIsEditModalOpen(true);
+    };
+
+    const handleInspect = (u: UserItem) => {
+        setSelectedUser(u);
         setIsDrawerOpen(true);
     };
 
-    const handleIssueBadge = (userId: string) => {
-        toast.success(`Verified Seller Badge issued to ${userId}!`);
-        setIsDrawerOpen(false);
+    const handleToggleSuspend = (id: string) => {
+        setUsers((prev) =>
+            prev.map((u) => {
+                if (u.id === id) {
+                    const nextStatus = u.status === 'SUSPENDED' ? 'ACTIVE' : 'SUSPENDED';
+                    toast.info(`User ${id} status set to ${nextStatus}.`);
+                    return { ...u, status: nextStatus };
+                }
+                return u;
+            })
+        );
     };
 
-    const handleBanUser = (userId: string) => {
-        toast.error(`Account ${userId} has been BANNED permanently.`);
-        setIsDrawerOpen(false);
-    };
+    const filteredUsers = users.filter(
+        (u) =>
+            u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            u.phone.includes(searchQuery) ||
+            u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            u.id.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     return (
         <div className="space-y-6">
@@ -115,106 +169,88 @@ export default function UsersDirectoryPage() {
                 <div>
                     <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
                         <Users className="h-6 w-6 text-listify-orange" />
-                        User Directory & Verification Queue
+                        User Directory & Trust Management
                     </h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Manage buyer & seller accounts, issue trust badges, and handle suspensions.
+                        Manage buyer & seller accounts, issue verified dealer badges, and assign staff permissions.
                     </p>
                 </div>
+
+                <Button variant="primary" onClick={() => setIsCreateModalOpen(true)} className="shadow-lg shadow-listify-orange/30">
+                    <UserPlus className="h-4 w-4" />
+                    Create User / Admin Account
+                </Button>
             </div>
 
-            {/* Main Table Card */}
             <Card className="p-4 space-y-4">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
-                    <div className="w-full sm:w-80">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                    <div className="w-full sm:w-72">
                         <Input
-                            placeholder="Search by name, email, phone (+923)..."
+                            placeholder="Search by name, phone (+92), or email..."
                             icon={<Search className="h-4 w-4" />}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
-
-                    <div className="flex items-center gap-2">
-                        <Badge variant="verified" size="md">
-                            18,240 Total Users
-                        </Badge>
-                        <Badge variant="pending" size="md">
-                            7 Verification Requests
-                        </Badge>
-                    </div>
                 </div>
 
-                {/* High Density Users Table */}
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>User & Avatar</TableHead>
-                            <TableHead>Contact (PAK +923)</TableHead>
-                            <TableHead>Role & Trust</TableHead>
-                            <TableHead>Active Ads</TableHead>
-                            <TableHead>Reports</TableHead>
+                            <TableHead>User ID & Name</TableHead>
+                            <TableHead>Contact Phone & Email</TableHead>
+                            <TableHead>Account Role</TableHead>
                             <TableHead>Status</TableHead>
+                            <TableHead>Active Ads</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {filteredUsers.map((user) => (
-                            <TableRow key={user.id} className="cursor-pointer" onClick={() => handleInspectUser(user)}>
-                                {/* User Name */}
+                            <TableRow key={user.id} className="cursor-pointer" onClick={() => handleInspect(user)}>
                                 <TableCell>
-                                    <div className="flex items-center gap-3">
-                                        <img src={user.avatar} className="w-9 h-9 rounded-full object-cover shrink-0" />
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-bold text-xs text-slate-700 dark:text-slate-300">
+                                            {user.name.charAt(0)}
+                                        </div>
                                         <div>
-                                            <div className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                                            <div className="font-bold text-xs text-slate-900 dark:text-slate-100 flex items-center gap-1">
                                                 {user.name}
-                                                {user.verified && <ShieldCheck className="h-4 w-4 text-emerald-600" />}
+                                                {user.verified && <ShieldCheck className="h-3.5 w-3.5 text-blue-500" />}
                                             </div>
-                                            <div className="text-xs text-slate-400 font-mono">{user.id}</div>
+                                            <div className="font-mono text-[10px] text-slate-400">{user.id}</div>
                                         </div>
                                     </div>
                                 </TableCell>
 
-                                {/* Contact */}
                                 <TableCell>
-                                    <div className="text-xs space-y-0.5">
-                                        <div className="font-mono text-slate-700 dark:text-slate-300">{user.phone}</div>
-                                        <div className="text-slate-400">{user.email}</div>
-                                    </div>
+                                    <div className="font-mono text-xs text-slate-800 dark:text-slate-200">{user.phone}</div>
+                                    <div className="text-[11px] text-slate-400">{user.email}</div>
                                 </TableCell>
 
-                                {/* Role */}
                                 <TableCell>
-                                    {user.role === 'VERIFIED_DEALER' ? (
-                                        <Badge variant="featured" size="sm">Dealer Verified</Badge>
-                                    ) : (
-                                        <Badge variant="outline" size="sm">Standard User</Badge>
-                                    )}
+                                    <Badge variant={user.role === 'SUPER_ADMIN' ? 'banned' : user.role === 'VERIFIED_DEALER' ? 'verified' : 'outline'} size="sm">
+                                        {user.role}
+                                    </Badge>
                                 </TableCell>
 
-                                {/* Active Ads */}
-                                <TableCell className="font-bold text-slate-900 dark:text-slate-100">{user.activeAds}</TableCell>
-
-                                {/* Reports */}
                                 <TableCell>
-                                    {user.totalReports > 0 ? (
-                                        <Badge variant="banned" size="sm">{user.totalReports} Reports</Badge>
-                                    ) : (
-                                        <span className="text-xs text-slate-400">Clean</span>
-                                    )}
+                                    <Badge variant={user.status === 'ACTIVE' ? 'active' : 'banned'} size="sm">
+                                        {user.status}
+                                    </Badge>
                                 </TableCell>
 
-                                {/* Status */}
-                                <TableCell>
-                                    {user.status === 'ACTIVE' && <Badge variant="active" size="sm">Active</Badge>}
-                                    {user.status === 'SUSPENDED' && <Badge variant="banned" size="sm">Suspended</Badge>}
-                                </TableCell>
+                                <TableCell className="font-bold text-xs text-slate-700 dark:text-slate-300">{user.listingsCount}</TableCell>
 
-                                {/* Actions */}
                                 <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                                    <Button variant="ghost" size="sm" onClick={() => handleInspectUser(user)}>
-                                        Inspect
-                                    </Button>
+                                    <div className="flex items-center justify-end gap-1">
+                                        <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(user)}>
+                                            <Edit2 className="h-4 w-4" /> Edit
+                                        </Button>
+                                        <Button variant="ghost" size="sm" onClick={() => handleInspect(user)}>
+                                            <Eye className="h-4 w-4" /> Inspect
+                                        </Button>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -222,67 +258,185 @@ export default function UsersDirectoryPage() {
                 </Table>
             </Card>
 
-            {/* User Detail Side Drawer */}
+            {/* CREATE USER MODAL */}
+            <Dialog
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                title="Create New Account / Staff Admin"
+                description="Register a new user account and assign system authorization roles."
+                maxWidth="lg"
+            >
+                <form onSubmit={handleCreateUser} className="space-y-4 pt-2">
+                    <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase">Full Name</label>
+                        <Input
+                            placeholder="e.g. Usman Ghani"
+                            value={userName}
+                            onChange={(e) => setUserName(e.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase">Pakistani Mobile Phone (+92)</label>
+                            <Input
+                                placeholder="+92 300 1234567"
+                                value={userPhone}
+                                onChange={(e) => setUserPhone(e.target.value)}
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase">Email Address</label>
+                            <Input
+                                type="email"
+                                placeholder="usman@gmail.com"
+                                value={userEmail}
+                                onChange={(e) => setUserEmail(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase">Account Authorization Role</label>
+                            <select
+                                value={userRole}
+                                onChange={(e) => setUserRole(e.target.value as any)}
+                                className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-900 focus:ring-2 focus:ring-listify-orange dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                            >
+                                <option value="BUYER">Buyer / Standard User</option>
+                                <option value="SELLER">Registered Seller</option>
+                                <option value="VERIFIED_DEALER">Verified Commercial Dealer</option>
+                                <option value="MODERATOR">Staff Moderation Officer</option>
+                                <option value="SUPER_ADMIN">Platform Super Administrator</option>
+                            </select>
+                        </div>
+
+                        <div className="flex items-center pt-5">
+                            <label className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={isDealerVerified}
+                                    onChange={(e) => setIsDealerVerified(e.target.checked)}
+                                    className="rounded border-slate-300 text-listify-orange focus:ring-listify-orange"
+                                />
+                                <span>Issue Verified Blue Badge Immediately</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <Button variant="ghost" type="button" onClick={() => setIsCreateModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button variant="primary" type="submit">
+                            Create User Account
+                        </Button>
+                    </div>
+                </form>
+            </Dialog>
+
+            {/* EDIT USER MODAL */}
+            <Dialog
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                title={`Edit User: ${selectedUser?.name}`}
+                description="Update user role or verification status."
+                maxWidth="lg"
+            >
+                <form onSubmit={handleEditUser} className="space-y-4 pt-2">
+                    <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase">Full Name</label>
+                        <Input value={userName} onChange={(e) => setUserName(e.target.value)} required />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase">Phone</label>
+                            <Input value={userPhone} onChange={(e) => setUserPhone(e.target.value)} required />
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase">Email</label>
+                            <Input value={userEmail} onChange={(e) => setUserEmail(e.target.value)} />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase">Account Authorization Role</label>
+                            <select
+                                value={userRole}
+                                onChange={(e) => setUserRole(e.target.value as any)}
+                                className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-900 focus:ring-2 focus:ring-listify-orange dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                            >
+                                <option value="BUYER">Buyer / Standard User</option>
+                                <option value="SELLER">Registered Seller</option>
+                                <option value="VERIFIED_DEALER">Verified Commercial Dealer</option>
+                                <option value="MODERATOR">Staff Moderation Officer</option>
+                                <option value="SUPER_ADMIN">Platform Super Administrator</option>
+                            </select>
+                        </div>
+
+                        <div className="flex items-center pt-5">
+                            <label className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={isDealerVerified}
+                                    onChange={(e) => setIsDealerVerified(e.target.checked)}
+                                    className="rounded border-slate-300 text-listify-orange focus:ring-listify-orange"
+                                />
+                                <span>Verified Badge Active</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <Button variant="ghost" type="button" onClick={() => setIsEditModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button variant="primary" type="submit">
+                            Save Changes
+                        </Button>
+                    </div>
+                </form>
+            </Dialog>
+
+            {/* INSPECT DRAWER */}
             <Sheet
                 isOpen={isDrawerOpen}
                 onClose={() => setIsDrawerOpen(false)}
-                title={`User Account: ${selectedUser?.name}`}
-                subtitle={`ID: ${selectedUser?.id} • Joined ${selectedUser?.joinedDate}`}
+                title={`User Profile: ${selectedUser?.name}`}
+                subtitle={`ID: ${selectedUser?.id} • Role: ${selectedUser?.role}`}
                 width="md"
             >
                 {selectedUser && (
                     <div className="space-y-6">
-                        {/* Header Avatar Card */}
-                        <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800">
-                            <img src={selectedUser.avatar} className="w-16 h-16 rounded-full object-cover shadow-sm" />
-                            <div>
-                                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                                    {selectedUser.name}
-                                    {selectedUser.verified && <ShieldCheck className="h-5 w-5 text-emerald-600" />}
-                                </h3>
-                                <p className="text-xs text-slate-500">{selectedUser.email}</p>
-                                <p className="text-xs font-mono text-listify-orange font-bold mt-1">{selectedUser.phone}</p>
+                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 space-y-2 text-xs">
+                            <div className="flex justify-between">
+                                <span>Phone:</span>
+                                <strong className="font-mono">{selectedUser.phone}</strong>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Email:</span>
+                                <strong>{selectedUser.email}</strong>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Joined Date:</span>
+                                <strong>{selectedUser.joinedDate}</strong>
                             </div>
                         </div>
 
-                        {/* Quick Metrics */}
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-900 text-center">
-                                <div className="text-xs text-slate-500 font-medium">Active Ads</div>
-                                <div className="text-xl font-extrabold text-slate-900 dark:text-slate-100">{selectedUser.activeAds}</div>
-                            </div>
-                            <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-900 text-center">
-                                <div className="text-xs text-slate-500 font-medium">Reports Flagged</div>
-                                <div className="text-xl font-extrabold text-rose-600">{selectedUser.totalReports}</div>
-                            </div>
-                        </div>
-
-                        {/* Action Section */}
                         <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Trust & Verification Actions</h4>
-
-                            {!selectedUser.verified ? (
-                                <Button
-                                    variant="success"
-                                    className="w-full h-10 text-xs font-bold"
-                                    onClick={() => handleIssueBadge(selectedUser.id)}
-                                >
-                                    <ShieldCheck className="h-4 w-4" />
-                                    Grant Verified Seller Badge
-                                </Button>
-                            ) : (
-                                <Badge variant="verified" size="md" className="w-full justify-center py-2">
-                                    <ShieldCheck className="h-4 w-4" /> Verified Seller Status Active
-                                </Badge>
-                            )}
-
                             <Button
-                                variant="danger"
-                                className="w-full h-10 text-xs font-bold"
-                                onClick={() => handleBanUser(selectedUser.id)}
+                                variant={selectedUser.status === 'SUSPENDED' ? 'success' : 'danger'}
+                                className="w-full h-11 font-bold"
+                                onClick={() => handleToggleSuspend(selectedUser.id)}
                             >
-                                <Ban className="h-4 w-4" />
-                                Suspend Account & Remove Active Ads
+                                {selectedUser.status === 'SUSPENDED' ? 'Lift Suspension & Re-Activate' : 'Suspend Account Immediately'}
                             </Button>
                         </div>
                     </div>
